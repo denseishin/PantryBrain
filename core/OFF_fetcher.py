@@ -8,13 +8,17 @@ class OpenFoodFactFetcher(ProductFetcher):
 
     fetchengine = openfoodfacts.products
 
-    def fetch(self, EAN: int) -> CreateProduct:
+    def fetch(self, EAN: int, lang: str) -> CreateProduct:
         product = self.fetchengine.get_product(str(EAN).zfill(13))
         newProduct = CreateProduct(last_update=datetime.datetime.now(datetime.timezone.utc),EAN=EAN,
                                    product_name="", producer = "",
                                    net_weight = Decimal(0), source=0)
         if "product" in product.keys():
-            newProduct.product_name = product["product"].get("product_name","")
+            prod_loc_name_key = "product_name_{}".format(lang.lower())
+            if prod_loc_name_key in product["product"].keys():
+                newProduct.product_name = product["product"].get(prod_loc_name_key,"")
+            else:
+                newProduct.product_name = product["product"].get("product_name","")
             newProduct.producer = product["product"].get("brands","")
             quantity = product["product"].get("quantity", "")
             newProduct.net_weight = self._calc_net_weight(quantity)
@@ -52,5 +56,7 @@ class OpenFoodFactFetcher(ProductFetcher):
 
 if __name__ == "__main__":
     fetcher = OpenFoodFactFetcher()
-    test = fetcher.fetch(7622210421968)
+    test = fetcher.fetch(7622210421968,"de")
+    print(test)
+    test = fetcher.fetch(20081232,"de")
     print(test)

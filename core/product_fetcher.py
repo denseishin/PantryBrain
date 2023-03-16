@@ -32,7 +32,7 @@ def convert_to_g(weight,unit,density = Decimal(1)):
 
 class ProductFetcher(object):
 
-    def fetch(self, EAN: int) -> CreateProduct:
+    def fetch(self, EAN: int, lang: str) -> CreateProduct:
         raise NotImplementedError("Please implement this method")
 
     def _calc_net_weight(self, raw_weight: str) -> condecimal(max_digits = 8, decimal_places=2):

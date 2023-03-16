@@ -43,7 +43,7 @@ class StateMachine(BaseClient):
                     self._output_queue.put(msg)
                     self._current_weights[tmp[0]] = tmp[1]
 
-    def __init__(self, mqttconf = "statemachine_mqtt.json"):
+    def __init__(self, mqttconf = "statemachine_mqtt.json", smconf = "statemachine_settings.json"):
         super().__init__(mqttconf)
         self._wwatch = StateMachine.WeightWatcher(self._inputqueue)
         self._weight_q = self._wwatch._weightqueue
@@ -55,6 +55,8 @@ class StateMachine(BaseClient):
         self.errDisplay = errorState(self)
         #self.photoSave = savePhotoState(self)
         self.currentstate = self.closedWait
+        with open(smconf,"r") as sf:
+            self.settings = json.load(sf)
 
     def _sub_on_connect(self, client, userdata, flags, rc, prop):
         self._client.subscribe("regal/weight/+/filtered")
@@ -132,7 +134,7 @@ class StateMachine(BaseClient):
                                                 product_name="", producer = "",
                                                 net_weight = decimal.Decimal(0), source=0)
         for fetcher in self._metadataSources:
-            tmp = fetcher.fetch(barcode)
+            tmp = fetcher.fetch(barcode,self.settings["lang"])
             if not prod.product_name: prod.product_name = tmp.product_name
             if not prod.producer: prod.producer = tmp.producer
             if not prod.net_weight: prod.net_weight = tmp.net_weight
@@ -373,8 +375,8 @@ class errorState(State):
     def next(self, inputData: dict):
         return self._machine.openWait
 
-def run(config = "statemachine_mqtt.json"):
-    machine = StateMachine(config)
+def run(mqttconfig = "statemachine_mqtt.json", smconfig = "statemachine_settings.json"):
+    machine = StateMachine(mqttconfig,smconfig)
     machine.start()
     machine.runMachine()
 
